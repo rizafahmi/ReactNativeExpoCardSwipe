@@ -4,82 +4,90 @@ import { View, Animated, PanResponder, Dimensions } from 'react-native'
 const SCREEN_WIDTH = Dimensions.get('window').width
 const SCALE = 1.5
 const SWIPE_OUT_DURATION = 250
+const SWIPE_TRESHOLD = 0.25 * SCREEN_WIDTH
 
-const getCardStyle = position => {
-  const rotate = position.x.interpolate({
-    inputRange: [(-SCREEN_WIDTH) * SCALE, 0, SCREEN_WIDTH * SCALE],
-    outputRange: ['-120deg', '0deg', '120deg']
-  })
-  return {
-    ...position.getLayout(),
-    transform: [{ rotate }]
-  }
-}
+export default class Deck extends React.Component {
+  constructor (props) {
+    super(props)
 
-const resetPosition = position => {
-  Animated.spring(position, {
-    toValue: { x: 0, y: 0 }
-  })
-    .start()
-}
+    const position = new Animated.ValueXY()
 
-const forceSwipe = (position, direction, props) => {
-  const x = direction === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH
-  Animated.timing(position, {
-    toValue: { x: x, y: 0 },
-    duration: SWIPE_OUT_DURATION
-  })
-    .start(() => onSwipeComplete(direction, props))
-}
-
-const onSwipeComplete = (direction, props) => {
-  const { onSwipeLeft, onSwipeRight } = props
-
-  direction === 'right' ? onSwipeRight() : onSwipeLeft()
-}
-export default ({ data, renderCard, onSwipeLeft, onSwipeRight }) => {
-  const SWIPE_WIDTH = Dimensions.get('window').width
-  const SWIPE_TRESHOLD = 0.25 * SWIPE_WIDTH
-  const position = new Animated.ValueXY()
-
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onPanResponderMove: (event, gesture) => {
-      position.setValue({
-        x: gesture.dx,
-        y: gesture.dy
-      })
-    },
-    onPanResponderRelease: (event, gesture) => {
-      if (gesture.dx > SWIPE_TRESHOLD) {
-        forceSwipe(position, 'right', { onSwipeLeft, onSwipeRight })
-      } else if (gesture.dx < -SWIPE_TRESHOLD) {
-        forceSwipe(position, 'left')
-      } else {
-        resetPosition(position)
-      }
-    }
-  })
-  return (
-    <View>
-      {data.map((item, index) => {
-        if (index === 0) {
-          return (
-            <Animated.View
-              key={item.id}
-              style={getCardStyle(position)}
-              {...panResponder.panHandlers}
-            >
-              {renderCard(item)}
-            </Animated.View>
-          )
+    const panResponder = PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderMove: (event, gesture) => {
+        position.setValue({
+          x: gesture.dx,
+          y: gesture.dy
+        })
+      },
+      onPanResponderRelease: (event, gesture) => {
+        if (gesture.dx > SWIPE_TRESHOLD) {
+          this.forceSwipe('right')
+        } else if (gesture.dx < -SWIPE_TRESHOLD) {
+          this.forceSwipe('left')
+        } else {
+          this.resetPosition(position)
         }
-        return (
-          <View key={item.id}>
-            {renderCard(item)}
-          </View>
-        )
-      })}
-    </View>
-  )
+      }
+    })
+
+    this.state = {
+      position: position,
+      panResponder: panResponder
+    }
+  }
+  getCardStyle () {
+    const rotate = this.state.position.x.interpolate({
+      inputRange: [(-SCREEN_WIDTH) * SCALE, 0, SCREEN_WIDTH * SCALE],
+      outputRange: ['-120deg', '0deg', '120deg']
+    })
+    return {
+      ...this.state.position.getLayout(),
+      transform: [{ rotate }]
+    }
+  }
+
+  resetPosition () {
+    Animated.spring(this.state.position, {
+      toValue: { x: 0, y: 0 }
+    })
+      .start()
+  }
+  forceSwipe (direction) {
+    const x = direction === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH
+    Animated.timing(this.state.position, {
+      toValue: { x: x, y: 0 },
+      duration: SWIPE_OUT_DURATION
+    })
+      .start(() => this.props.onSwipeComplete(direction))
+  }
+  onSwipeComplete (direction) {
+    const { onSwipeLeft, onSwipeRight } = this.props
+
+    direction === 'right' ? onSwipeRight() : onSwipeLeft()
+  }
+  render () {
+    return (
+      <View>
+        {this.props.data.map((item, index) => {
+          if (index === 0) {
+            return (
+              <Animated.View
+                key={item.id}
+                style={this.getCardStyle()}
+                {...this.state.panResponder.panHandlers}
+              >
+                {this.props.renderCard(item)}
+              </Animated.View>
+            )
+          }
+          return (
+            <View key={item.id}>
+              {this.props.renderCard(item)}
+            </View>
+          )
+        })}
+      </View>
+    )
+  }
 }
