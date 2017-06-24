@@ -1,5 +1,5 @@
 import React from 'react'
-import { Animated, PanResponder } from 'react-native'
+import { View, Animated, PanResponder } from 'react-native'
 
 export default ({ data, renderCard }) => {
   const position = new Animated.ValueXY()
@@ -14,8 +14,25 @@ export default ({ data, renderCard }) => {
     onPanResponderRelease: () => {}
   })
   return (
-    <Animated.View style={position.getLayout()} {...panResponder.panHandlers}>
-      {data.map(item => renderCard(item))}
-    </Animated.View>
+    <View>
+      {data.map((item, index) => {
+        if (index === 0) {
+          return (
+            <Animated.View
+              key={item.id}
+              style={position.getLayout()}
+              {...panResponder.panHandlers}
+            >
+              {renderCard(item)}
+            </Animated.View>
+          )
+        }
+        return (
+          <View key={item.id}>
+            {renderCard(item)}
+          </View>
+        )
+      })}
+    </View>
   )
 }
