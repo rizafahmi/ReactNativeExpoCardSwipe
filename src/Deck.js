@@ -14,6 +14,13 @@ const getCardStyle = position => {
   }
 }
 
+const resetPosition = position => {
+  Animated.spring(position, {
+    toValue: { x: 0, y: 0 }
+  })
+    .start()
+}
+
 export default ({ data, renderCard }) => {
   const position = new Animated.ValueXY()
   const panResponder = PanResponder.create({
@@ -24,7 +31,9 @@ export default ({ data, renderCard }) => {
         y: gesture.dy
       })
     },
-    onPanResponderRelease: () => {}
+    onPanResponderRelease: () => {
+      resetPosition(position)
+    }
   })
   return (
     <View>
