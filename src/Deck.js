@@ -23,15 +23,21 @@ const resetPosition = position => {
     .start()
 }
 
-const forceSwipeRight = position => {
+const forceSwipe = (position, direction, props) => {
+  const x = direction === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH
   Animated.timing(position, {
-    toValue: { x: SCREEN_WIDTH, y: 0 },
+    toValue: { x: x, y: 0 },
     duration: SWIPE_OUT_DURATION
   })
-    .start()
+    .start(() => onSwipeComplete(direction, props))
 }
 
-export default ({ data, renderCard }) => {
+const onSwipeComplete = (direction, props) => {
+  const { onSwipeLeft, onSwipeRight } = props
+
+  direction === 'right' ? onSwipeRight() : onSwipeLeft()
+}
+export default ({ data, renderCard, onSwipeLeft, onSwipeRight }) => {
   const SWIPE_WIDTH = Dimensions.get('window').width
   const SWIPE_TRESHOLD = 0.25 * SWIPE_WIDTH
   const position = new Animated.ValueXY()
@@ -46,9 +52,9 @@ export default ({ data, renderCard }) => {
     },
     onPanResponderRelease: (event, gesture) => {
       if (gesture.dx > SWIPE_TRESHOLD) {
-        forceSwipeRight(position)
+        forceSwipe(position, 'right', { onSwipeLeft, onSwipeRight })
       } else if (gesture.dx < -SWIPE_TRESHOLD) {
-        console.log('Swipe Left!')
+        forceSwipe(position, 'left')
       } else {
         resetPosition(position)
       }
