@@ -7,6 +7,10 @@ const SWIPE_OUT_DURATION = 250
 const SWIPE_TRESHOLD = 0.25 * SCREEN_WIDTH
 
 export default class Deck extends React.Component {
+  static defaultProps = {
+    onSwipeLeft : () => {},
+    onSwipeRight : () => {}
+  }
   constructor (props) {
     super(props)
 
@@ -33,7 +37,8 @@ export default class Deck extends React.Component {
 
     this.state = {
       position: position,
-      panResponder: panResponder
+      panResponder: panResponder,
+      index: 0
     }
   }
   getCardStyle () {
@@ -59,12 +64,13 @@ export default class Deck extends React.Component {
       toValue: { x: x, y: 0 },
       duration: SWIPE_OUT_DURATION
     })
-      .start(() => this.props.onSwipeComplete(direction))
+      .start(() => this.onSwipeComplete(direction))
   }
   onSwipeComplete (direction) {
-    const { onSwipeLeft, onSwipeRight } = this.props
+    const { data, onSwipeLeft, onSwipeRight } = this.props
+    const item = data[this.state.index]
 
-    direction === 'right' ? onSwipeRight() : onSwipeLeft()
+    direction === 'right' ? onSwipeRight(item) : onSwipeLeft(item)
   }
   render () {
     return (
